@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0f0f13;
+  --foreground: #e8e8f0;
+  --card: #1a1a24;
+  --card-border: #2a2a3a;
+  --accent: #6c63ff;
+  --accent-2: #ff6584;
+  --accent-3: #43d9ad;
+  --muted: #4a4a6a;
+  --muted-text: #8888aa;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', 'Noto Sans JP', sans-serif;
+}
+
+.card {
+  background-color: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+}
+
+.metric-positive { color: #43d9ad; }
+.metric-negative { color: #ff6584; }
+.metric-neutral  { color: #8888aa; }

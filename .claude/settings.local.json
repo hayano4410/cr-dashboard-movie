@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sv http://localhost:3000/creatives/smjh045-adult-A1-640x100-j.jpg)"
+    ]
+  }
+}

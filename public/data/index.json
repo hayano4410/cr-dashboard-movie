@@ -1,0 +1,20 @@
+[
+  {
+    "id": "w3-2-3-8",
+    "label": "3/2～3/8",
+    "file": "w3-2-3-8.json",
+    "mediaFile": "media-w3-2-3-8.json"
+  },
+  {
+    "id": "w3-9-3-15",
+    "label": "3/9～3/15",
+    "file": "w3-9-3-15.json",
+    "mediaFile": "media-w3-9-3-15.json"
+  },
+  {
+    "id": "w3-16-3-22",
+    "label": "3/16～3/22",
+    "file": "w3-16-3-22.json",
+    "mediaFile": "media-w3-16-3-22.json"
+  }
+]
