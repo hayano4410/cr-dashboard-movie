@@ -1,6 +1,6 @@
 export interface Creative {
   id: number;
-  期間: string;
+  日付: string;
   計測URL: string;
   CR名: string;
   計測用URL: string;
@@ -27,12 +27,14 @@ export type SortKey = keyof Pick<Creative, 'ROAS' | 'COST' | 'CV' | 'CPA' | 'IMP
 export type SortDir = 'asc' | 'desc';
 
 export interface MediaRow {
-  期間: string;
+  日付: string;
   CR名: string;
+  計測リンク: string;
   メディア: string;
-  COST: number;
   IMP: number;
   Click: number;
+  COST: number;
   CV: number;
   CRサイズ: string;
+  target: string;
 }

@@ -102,7 +102,7 @@ export default function CreativePanel({ creative, onClose }: Props) {
                   {creative.target}
                 </span>
                 <span className="text-xs truncate" style={{ color: "var(--muted-text)" }}>
-                  {creative["期間"]}
+                  {creative["日付"]}
                 </span>
               </div>
               <button

@@ -26,9 +26,10 @@ export function getCreativeFilename(crName: string): string | null {
     return addExt(crName.slice(crName.lastIndexOf("--") + 2));
   }
 
-  // パターン2: '-in-' 区切り
-  if (crName.includes("-in-")) {
-    const key = crName.slice(crName.indexOf("-in-") + 1);
+  // パターン2: '-in-' または '_in-' 区切り
+  if (crName.includes("-in-") || crName.includes("_in-")) {
+    const sep = crName.includes("-in-") ? "-in-" : "_in-";
+    const key = crName.slice(crName.indexOf(sep) + 1);
     return addExt(key.endsWith(".gif") || key.endsWith(".jpg") ? key : key + ".gif");
   }
 

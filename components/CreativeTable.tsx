@@ -193,7 +193,7 @@ export default function CreativeTable({ data }: Props) {
                       {shortCRName(row["CR名"]) || row["CR名"].slice(0, 40)}
                     </div>
                     <div className="text-xs mt-0.5" style={{ color: "var(--muted-text)" }}>
-                      {row["期間"]}
+                      {row["日付"]}
                     </div>
                   </button>
                 </td>

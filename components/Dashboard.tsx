@@ -1,96 +1,127 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Creative, MediaRow } from "@/lib/types";
 import SummaryCards from "@/components/SummaryCards";
 import TopChart from "@/components/TopChart";
 import CreativeTable from "@/components/CreativeTable";
 import MediaDashboard from "@/components/MediaDashboard";
 
-interface WeekEntry {
-  id: string;
-  label: string;
-  file?: string;
-  mediaFile?: string;
-}
-
 type ActiveTab = "cr" | "media";
 
-interface Props {
-  weeks: WeekEntry[];
+function aggregateByCR(rows: Creative[]): Creative[] {
+  const map = new Map<string, Creative>();
+  for (const row of rows) {
+    const acc = map.get(row.CR名);
+    if (acc) {
+      acc.IMP += row.IMP;
+      acc.Click += row.Click;
+      acc.CV += row.CV;
+      acc.COST += row.COST;
+      acc.LTV += row.LTV;
+    } else {
+      map.set(row.CR名, { ...row });
+    }
+  }
+  return Array.from(map.values()).map((r) => ({
+    ...r,
+    CTR: r.IMP > 0 ? r.Click / r.IMP : 0,
+    CVR: r.Click > 0 ? r.CV / r.Click : 0,
+    CPA: r.CV > 0 ? r.COST / r.CV : 0,
+    ROAS: r.COST > 0 ? r.LTV / r.COST : 0,
+    CTVR: r.IMP > 0 ? r.CV / r.IMP : 0,
+  }));
 }
 
-export default function Dashboard({ weeks }: Props) {
-  const [selectedWeek, setSelectedWeek] = useState<WeekEntry>(weeks[0]);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("cr");
-  const [data, setData] = useState<Creative[]>([]);
-  const [mediaData, setMediaData] = useState<MediaRow[]>([]);
+export default function Dashboard() {
+  const [allCRData, setAllCRData] = useState<Creative[]>([]);
+  const [allMediaData, setAllMediaData] = useState<MediaRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mediaLoading, setMediaLoading] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("cr");
 
   useEffect(() => {
-    if (!selectedWeek.file) {
-      setData([]);
+    Promise.all([
+      fetch("/api/data/all-data.json").then((r) => r.json()).catch(() => []),
+      fetch("/api/data/all-media-data.json").then((r) => r.json()).catch(() => []),
+    ]).then(([cr, media]) => {
+      setAllCRData(cr);
+      setAllMediaData(media);
+      const dates = (cr as Creative[]).map((d) => d.日付).sort();
+      if (dates.length > 0) {
+        setDateFrom(dates[0]);
+        setDateTo(dates[dates.length - 1]);
+      }
       setLoading(false);
-      return;
-    }
-    setLoading(true);
-    fetch(`/data/${selectedWeek.file}`)
-      .then((r) => r.json())
-      .then((d: Creative[]) => {
-        setData(d);
-        setLoading(false);
-      })
-      .catch(() => { setData([]); setLoading(false); });
-  }, [selectedWeek]);
+    });
+  }, []);
 
-  useEffect(() => {
-    if (!selectedWeek.mediaFile) {
-      setMediaData([]);
-      return;
-    }
-    setMediaLoading(true);
-    fetch(`/data/${selectedWeek.mediaFile}`)
-      .then((r) => r.json())
-      .then((d: MediaRow[]) => {
-        setMediaData(d);
-        setMediaLoading(false);
-      })
-      .catch(() => {
-        setMediaData([]);
-        setMediaLoading(false);
-      });
-  }, [selectedWeek]);
+  const availableDates = useMemo(() => {
+    const dates = [...new Set(allCRData.map((d) => d.日付))].sort();
+    return { min: dates[0] ?? "", max: dates[dates.length - 1] ?? "" };
+  }, [allCRData]);
+
+  const crData = useMemo(() => {
+    if (!dateFrom || !dateTo) return [];
+    const filtered = allCRData.filter((d) => d.日付 >= dateFrom && d.日付 <= dateTo);
+    return aggregateByCR(filtered);
+  }, [allCRData, dateFrom, dateTo]);
+
+  const mediaData = useMemo(() => {
+    if (!dateFrom || !dateTo) return allMediaData;
+    return allMediaData.filter((d) => d.日付 >= dateFrom && d.日付 <= dateTo);
+  }, [allMediaData, dateFrom, dateTo]);
 
   return (
     <>
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-2 h-8 rounded-full" style={{ background: "var(--accent)" }} />
           <h1 className="text-2xl font-bold tracking-tight text-white">
             Creative Dashboard
           </h1>
         </div>
 
-        {/* Week selector */}
-        <div className="ml-5 flex items-center gap-2 flex-wrap">
+        {/* 日付範囲ピッカー */}
+        <div className="ml-5 flex items-center gap-3 flex-wrap">
           <span className="text-xs font-semibold" style={{ color: "var(--muted-text)" }}>
-            週次：
+            期間：
           </span>
-          {weeks.map((w) => (
-            <button
-              key={w.id}
-              onClick={() => setSelectedWeek(w)}
-              className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all"
-              style={{
-                background: selectedWeek.id === w.id ? "var(--accent)" : "var(--card)",
-                color: selectedWeek.id === w.id ? "#fff" : "var(--muted-text)",
-                border: `1px solid ${selectedWeek.id === w.id ? "var(--accent)" : "var(--card-border)"}`,
-              }}
-            >
-              {w.label}
-            </button>
-          ))}
+          <input
+            type="date"
+            value={dateFrom}
+            min={availableDates.min}
+            max={dateTo || availableDates.max}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="text-xs px-3 py-1.5 rounded"
+            style={{
+              background: "var(--card)",
+              color: "var(--foreground)",
+              border: "1px solid var(--card-border)",
+              colorScheme: "dark",
+            }}
+          />
+          <span className="text-xs" style={{ color: "var(--muted-text)" }}>〜</span>
+          <input
+            type="date"
+            value={dateTo}
+            min={dateFrom || availableDates.min}
+            max={availableDates.max}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="text-xs px-3 py-1.5 rounded"
+            style={{
+              background: "var(--card)",
+              color: "var(--foreground)",
+              border: "1px solid var(--card-border)",
+              colorScheme: "dark",
+            }}
+          />
+          {availableDates.min && (
+            <span className="text-xs" style={{ color: "var(--muted-text)" }}>
+              （データ範囲: {availableDates.min} 〜 {availableDates.max}）
+            </span>
+          )}
         </div>
       </div>
 
@@ -119,36 +150,36 @@ export default function Dashboard({ weeks }: Props) {
       {/* CRレポート */}
       {activeTab === "cr" && (
         <>
-          {!selectedWeek.file ? (
-            <div className="flex items-center justify-center py-32">
-              <div className="text-sm" style={{ color: "var(--muted-text)" }}>
-                この週のCRデータは未登録です
-              </div>
-            </div>
-          ) : loading ? (
+          {loading ? (
             <div className="flex items-center justify-center py-32">
               <div className="text-sm" style={{ color: "var(--muted-text)" }}>
                 読み込み中...
+              </div>
+            </div>
+          ) : crData.length === 0 ? (
+            <div className="flex items-center justify-center py-32">
+              <div className="text-sm" style={{ color: "var(--muted-text)" }}>
+                指定期間のCRデータがありません
               </div>
             </div>
           ) : (
             <>
               <section className="mb-8">
                 <SectionLabel>サマリー</SectionLabel>
-                <SummaryCards data={data} />
+                <SummaryCards data={crData} />
               </section>
 
               <section className="mb-8">
                 <SectionLabel>TOP クリエイティブ</SectionLabel>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <TopChart data={data} metric="COST" />
-                  <TopChart data={data} metric="CV" />
+                  <TopChart data={crData} metric="COST" />
+                  <TopChart data={crData} metric="CV" />
                 </div>
               </section>
 
               <section>
                 <SectionLabel>クリエイティブ一覧</SectionLabel>
-                <CreativeTable data={data} />
+                <CreativeTable data={crData} />
               </section>
             </>
           )}
@@ -158,16 +189,16 @@ export default function Dashboard({ weeks }: Props) {
       {/* メディアレポート */}
       {activeTab === "media" && (
         <>
-          {mediaLoading ? (
+          {loading ? (
             <div className="flex items-center justify-center py-32">
               <div className="text-sm" style={{ color: "var(--muted-text)" }}>
                 読み込み中...
               </div>
             </div>
-          ) : !selectedWeek.mediaFile ? (
+          ) : mediaData.length === 0 ? (
             <div className="flex items-center justify-center py-32">
               <div className="text-sm" style={{ color: "var(--muted-text)" }}>
-                この週のメディアデータは未登録です
+                指定期間のメディアデータがありません
               </div>
             </div>
           ) : (

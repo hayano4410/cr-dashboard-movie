@@ -1,7 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
 import { MediaRow, Creative } from "@/lib/types"; // Creative は toCreative の戻り値型として使用
-import { deriveTarget } from "@/lib/deriveTarget";
 import CreativePanel from "@/components/CreativePanel";
 
 /** MediaRow → CreativePanel が受け付ける Creative 型へ変換 */
@@ -12,7 +11,7 @@ function toCreative(row: MediaRow): Creative {
   const ctvr = row.IMP > 0 ? row.CV / row.IMP : 0;
   return {
     id: 0,
-    期間: row.期間,
+    日付: row.日付,
     CR名: row.CR名,
     計測URL: "",
     計測用URL: "",
@@ -32,7 +31,7 @@ function toCreative(row: MediaRow): Creative {
     listType: "",
     shortName: "",
     creativePart: "",
-    target: deriveTarget(row.CR名),
+    target: row.target,
   };
 }
 
@@ -117,7 +116,7 @@ export default function MediaDashboard({ mediaData }: Props) {
     () =>
       mediaData.filter((r) => {
         if (targetFilter === "すべて") return true;
-        return deriveTarget(r.CR名) === targetFilter;
+        return r.target === targetFilter;
       }),
     [mediaData, targetFilter]
   );
@@ -173,10 +172,23 @@ export default function MediaDashboard({ mediaData }: Props) {
   );
 
   // CV発生CR一覧（CV>0）
-  const cvCRRows = useMemo(
-    () => filtered.filter((r) => r.CV > 0).sort((a, b) => b.CV - a.CV),
-    [filtered]
-  );
+  const cvCRRows = useMemo(() => {
+    const map = new Map<string, MediaRow & { IMP: number; Click: number; COST: number; CV: number }>();
+    for (const r of filtered) {
+      if (r.CV <= 0) continue;
+      const key = `${r.CR名}__${r.メディア}`;
+      const acc = map.get(key);
+      if (acc) {
+        acc.IMP += r.IMP;
+        acc.Click += r.Click;
+        acc.COST += r.COST;
+        acc.CV += r.CV;
+      } else {
+        map.set(key, { ...r });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.CV - a.CV);
+  }, [filtered]);
 
   function handleMediaSort(key: MediaSortKey) {
     if (sortKey === key) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
@@ -504,7 +516,7 @@ export default function MediaDashboard({ mediaData }: Props) {
                             className="text-xs mt-0.5"
                             style={{ color: "var(--muted-text)" }}
                           >
-                            {row.期間}
+                            {row.日付}
                           </div>
                         </button>
                       </td>
