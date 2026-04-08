@@ -20,7 +20,7 @@ if (!fs.existsSync(excelPath)) {
   process.exit(1);
 }
 
-const outDir = path.join(__dirname, "..", "private-data");
+const outDir = path.join(__dirname, "..", "public", "data");
 const crOutPath = path.join(outDir, "all-data.json");
 const mediaOutPath = path.join(outDir, "all-media-data.json");
 

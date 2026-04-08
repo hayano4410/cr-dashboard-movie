@@ -42,8 +42,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/data/all-data.json").then((r) => r.json()).catch(() => []),
-      fetch("/api/data/all-media-data.json").then((r) => r.json()).catch(() => []),
+      fetch("/data/all-data.json").then((r) => r.json()).catch(() => []),
+      fetch("/data/all-media-data.json").then((r) => r.json()).catch(() => []),
     ]).then(([cr, media]) => {
       setAllCRData(cr);
       setAllMediaData(media);
