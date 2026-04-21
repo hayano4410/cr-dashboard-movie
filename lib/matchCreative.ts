@@ -35,7 +35,11 @@ export function getCreativeFilename(crName: string): string | null {
 
   // パターン3: '-YYMMDD-' または '_YYMMDD-' 形式
   const m = crName.match(/[_-](\d{6}-.+)$/);
-  if (m) return addExt(m[1]);
+  if (m) {
+    // CR名に '-videocp-' があるがファイルは '-videoa-cp-' で命名されているケースを補正
+    const fixed = m[1].replace(/-videocp-/g, "-videoa-cp-");
+    return addExt(fixed);
+  }
 
   return null;
 }
