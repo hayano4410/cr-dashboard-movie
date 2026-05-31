@@ -34,8 +34,13 @@ function toISO(val) {
 
 // CR名からサイズ抽出
 function extractSize(crName) {
+  // パターン1: 600x500 形式（通常クリエイティブ）
   const m = crName.match(/(\d+x\d+)/);
-  return m ? m[1] : "";
+  if (m) return m[1];
+  // パターン2: -in- 形式は末尾が "幅-高さ" (例: -600-500, -640-100)
+  const inMatch = crName.match(/-(\d+)-(\d+)$/);
+  if (inMatch) return `${inMatch[1]}x${inMatch[2]}`;
+  return "";
 }
 
 // CR名からターゲット判定
@@ -102,7 +107,7 @@ const crEnriched = crRaw.map((row, i) => ({
   CPA: row["CPA"] || 0,
   IMP: row["IMP"] || 0,
   Click: row["Click"] || 0,
-  CRサイズ: row["CRサイズ"] || "",
+  CRサイズ: extractSize(row["CR名"] || "") || (row["CRサイズ"] && row["CRサイズ"] !== "-" ? row["CRサイズ"] : ""),
   CTR: row["CTR"] || 0,
   CVR: row["CVR"] || 0,
   CTVR: row["CTVR"] || 0,
