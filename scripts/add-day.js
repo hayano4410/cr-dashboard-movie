@@ -151,7 +151,7 @@ if (!mediaSheetName) {
       メディア: row["メディア"] || "",
       IMP: row["IMP"] || 0,
       Click: row["Click"] || 0,
-      COST: row["COST"] || 0,
+      COST: (row["COST"] || 0) * 1.25,
       CV: row["CV"] || 0,
       CRサイズ: extractSize(crName),
       target: getMediaTarget(crName, gender),
