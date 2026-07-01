@@ -156,7 +156,7 @@ if (!mediaSheetName) {
       CRサイズ: extractSize(crName),
       target: getMediaTarget(crName, gender),
     };
-  });
+  }).filter((r) => r.日付 >= "2020-01-01");
 
   const importedMediaDates = [...new Set(mediaEnriched.map((r) => r.日付))].sort();
   console.log(
@@ -165,7 +165,7 @@ if (!mediaSheetName) {
 
   let existingMedia = [];
   if (fs.existsSync(mediaOutPath)) {
-    existingMedia = JSON.parse(fs.readFileSync(mediaOutPath, "utf-8"));
+    existingMedia = JSON.parse(fs.readFileSync(mediaOutPath, "utf-8")).filter((r) => r.日付 >= "2020-01-01");
     const before = existingMedia.length;
     existingMedia = existingMedia.filter((r) => !importedMediaDates.includes(r.日付));
     if (before !== existingMedia.length) {
