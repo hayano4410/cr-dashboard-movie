@@ -7,6 +7,25 @@ import CreativeTable from "@/components/CreativeTable";
 import MediaDashboard from "@/components/MediaDashboard";
 
 type ActiveTab = "cr" | "media";
+type Company = "dmm" | "bypass";
+
+const COMPANIES: { key: Company; label: string }[] = [
+  { key: "dmm", label: "DMM" },
+  { key: "bypass", label: "Bypass" },
+];
+
+const DATA_FILES: Record<Company, { cr: string; media: string }> = {
+  dmm: { cr: "/data/all-data.json", media: "/data/all-media-data.json" },
+  bypass: {
+    cr: "/data/all-bypass-data.json",
+    media: "/data/all-bypass-media-data.json",
+  },
+};
+
+interface CompanyData {
+  cr: Creative[];
+  media: MediaRow[];
+}
 
 function aggregateByCR(rows: Creative[]): Creative[] {
   const map = new Map<string, Creative>();
@@ -33,28 +52,44 @@ function aggregateByCR(rows: Creative[]): Creative[] {
 }
 
 export default function Dashboard() {
-  const [allCRData, setAllCRData] = useState<Creative[]>([]);
-  const [allMediaData, setAllMediaData] = useState<MediaRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataByCompany, setDataByCompany] = useState<
+    Partial<Record<Company, CompanyData>>
+  >({});
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [dateRangeCompany, setDateRangeCompany] = useState<Company | null>(null);
+  const [company, setCompany] = useState<Company>("dmm");
   const [activeTab, setActiveTab] = useState<ActiveTab>("cr");
 
   useEffect(() => {
+    if (dataByCompany[company]) return;
+    const files = DATA_FILES[company];
     Promise.all([
-      fetch("/data/all-data.json").then((r) => r.json()).catch(() => []),
-      fetch("/data/all-media-data.json").then((r) => r.json()).catch(() => []),
+      fetch(files.cr).then((r) => r.json()).catch(() => []),
+      fetch(files.media).then((r) => r.json()).catch(() => []),
     ]).then(([cr, media]) => {
-      setAllCRData(cr);
-      setAllMediaData(media);
-      const dates = (cr as Creative[]).map((d) => d.日付).sort();
-      if (dates.length > 0) {
-        setDateFrom(dates[0]);
-        setDateTo(dates[dates.length - 1]);
-      }
-      setLoading(false);
+      setDataByCompany((prev) => ({ ...prev, [company]: { cr, media } }));
     });
-  }, []);
+  }, [company, dataByCompany]);
+
+  const loading = !dataByCompany[company];
+
+  const allCRData = useMemo(
+    () => dataByCompany[company]?.cr ?? [],
+    [dataByCompany, company],
+  );
+  const allMediaData = useMemo(
+    () => dataByCompany[company]?.media ?? [],
+    [dataByCompany, company],
+  );
+
+  // 企業切替（初回読み込み含む）時は、その企業のデータ全期間にリセット
+  if (dataByCompany[company] && dateRangeCompany !== company) {
+    setDateRangeCompany(company);
+    const dates = allCRData.map((d) => d.日付).sort();
+    setDateFrom(dates[0] ?? "");
+    setDateTo(dates[dates.length - 1] ?? "");
+  }
 
   const availableDates = useMemo(() => {
     const dates = [...new Set(allCRData.map((d) => d.日付))].sort();
@@ -123,6 +158,29 @@ export default function Dashboard() {
             </span>
           )}
         </div>
+      </div>
+
+      {/* 企業タブ */}
+      <div className="ml-5 flex items-center gap-1 mb-4">
+        {COMPANIES.map(({ key, label }) => {
+          const active = company === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setCompany(key)}
+              className="px-5 py-1.5 text-xs font-semibold rounded-full transition-all"
+              style={{
+                color: active ? "#fff" : "var(--muted-text)",
+                background: active ? "var(--accent)" : "var(--card)",
+                border: active
+                  ? "1px solid var(--accent)"
+                  : "1px solid var(--card-border)",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab switcher */}
