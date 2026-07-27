@@ -7,15 +7,15 @@ import CreativeTable from "@/components/CreativeTable";
 import MediaDashboard from "@/components/MediaDashboard";
 
 type ActiveTab = "cr" | "media";
-type Company = "dmm" | "bypass";
+type Company = "geniee" | "bypass";
 
 const COMPANIES: { key: Company; label: string }[] = [
-  { key: "dmm", label: "DMM" },
+  { key: "geniee", label: "Geniee" },
   { key: "bypass", label: "Bypass" },
 ];
 
 const DATA_FILES: Record<Company, { cr: string; media: string }> = {
-  dmm: { cr: "/data/all-data.json", media: "/data/all-media-data.json" },
+  geniee: { cr: "/data/all-data.json", media: "/data/all-media-data.json" },
   bypass: {
     cr: "/data/all-bypass-data.json",
     media: "/data/all-bypass-media-data.json",
@@ -57,16 +57,22 @@ export default function Dashboard() {
   >({});
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [dateRangeCompany, setDateRangeCompany] = useState<Company | null>(null);
-  const [company, setCompany] = useState<Company>("dmm");
+  const [dateRangeCompany, setDateRangeCompany] = useState<Company | null>(
+    null,
+  );
+  const [company, setCompany] = useState<Company>("geniee");
   const [activeTab, setActiveTab] = useState<ActiveTab>("cr");
 
   useEffect(() => {
     if (dataByCompany[company]) return;
     const files = DATA_FILES[company];
     Promise.all([
-      fetch(files.cr).then((r) => r.json()).catch(() => []),
-      fetch(files.media).then((r) => r.json()).catch(() => []),
+      fetch(files.cr)
+        .then((r) => r.json())
+        .catch(() => []),
+      fetch(files.media)
+        .then((r) => r.json())
+        .catch(() => []),
     ]).then(([cr, media]) => {
       setDataByCompany((prev) => ({ ...prev, [company]: { cr, media } }));
     });
@@ -98,7 +104,9 @@ export default function Dashboard() {
 
   const crData = useMemo(() => {
     if (!dateFrom || !dateTo) return [];
-    const filtered = allCRData.filter((d) => d.日付 >= dateFrom && d.日付 <= dateTo);
+    const filtered = allCRData.filter(
+      (d) => d.日付 >= dateFrom && d.日付 <= dateTo,
+    );
     return aggregateByCR(filtered);
   }, [allCRData, dateFrom, dateTo]);
 
@@ -112,7 +120,10 @@ export default function Dashboard() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-2 h-8 rounded-full" style={{ background: "var(--accent)" }} />
+          <div
+            className="w-2 h-8 rounded-full"
+            style={{ background: "var(--accent)" }}
+          />
           <h1 className="text-2xl font-bold tracking-tight text-white">
             Creative Dashboard
           </h1>
@@ -120,7 +131,10 @@ export default function Dashboard() {
 
         {/* 日付範囲ピッカー */}
         <div className="ml-5 flex items-center gap-3 flex-wrap">
-          <span className="text-xs font-semibold" style={{ color: "var(--muted-text)" }}>
+          <span
+            className="text-xs font-semibold"
+            style={{ color: "var(--muted-text)" }}
+          >
             期間：
           </span>
           <input
@@ -137,7 +151,9 @@ export default function Dashboard() {
               colorScheme: "dark",
             }}
           />
-          <span className="text-xs" style={{ color: "var(--muted-text)" }}>〜</span>
+          <span className="text-xs" style={{ color: "var(--muted-text)" }}>
+            〜
+          </span>
           <input
             type="date"
             value={dateTo}
@@ -195,7 +211,9 @@ export default function Dashboard() {
               className="px-5 py-2 text-xs font-semibold transition-all"
               style={{
                 color: active ? "#fff" : "var(--muted-text)",
-                borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
+                borderBottom: active
+                  ? "2px solid var(--accent)"
+                  : "2px solid transparent",
                 background: "transparent",
               }}
             >
